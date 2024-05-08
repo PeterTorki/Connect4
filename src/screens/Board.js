@@ -6,12 +6,13 @@ import {
   View,
   TouchableOpacity,
   SafeAreaView,
+  Alert,
 } from "react-native";
 import Cell from "../components/Cell";
 import checkWin from "../components/Win";
 import axios from "axios";
 import CountDown from "../components/CountDown";
-
+import StartLunch from "../components/StartLunch";
 function copyGrid(grid) {
   return Array(grid.length)
     .fill()
@@ -37,22 +38,34 @@ export default function Board(props) {
   const [current, setCurrent] = useState(0);
   const [win, setWin] = useState(-1);
 
-  useEffect(() => {
-    if (current === 0) {
-      setIsPlaying(true);
-    } else {
-      setIsPlaying(false);
-      aiTurn();
-    }
-  }, [current]);
+  const [isAiPlaying, setIsAiPlaying] = useState(false);
+  const [areYouPlaying, setAreYouPlaying] = useState(false);
+  const [start, setStart] = useState(false);
+  const [countStart, setCountStart] = useState(false);
 
-  const [isPlaying, setIsPlaying] = useState(true);
+  useEffect(() => {
+    if (current === 0 && start === true) {
+      setIsAiPlaying(false);
+      setAreYouPlaying(true);
+    } else if (current === 1) {
+      aiTurn();
+      setAreYouPlaying(false);
+      setIsAiPlaying(true);
+    }
+  }, [current, start]);
 
   function updateCell(i, j, prop, value) {
     const copied = copyGrid(grid);
     copied[j][i][prop] = value;
     setGrid(copied);
   }
+
+  useEffect(() => {
+    if (win !== -1) {
+      setIsAiPlaying(false);
+      setAreYouPlaying(false);
+    }
+  }, [win]);
 
   async function aiTurn() {
     const board = grid.map((x) => x.map((obj) => obj.player + 1));
@@ -64,7 +77,7 @@ export default function Board(props) {
         }
       );
       const col = response.data.column;
-      console.log(col);
+
       gameLogic(col);
     } catch (error) {
       console.error(error);
@@ -75,8 +88,22 @@ export default function Board(props) {
     updateCell(i, j, "setPlayer", setPlayer);
   }
 
+  function handleTimeWin(player) {
+    setIsAiPlaying(false);
+    setAreYouPlaying(false);
+    console.log("handleTimeWin", player);
+    setWin(player);
+  }
+
   function gameLogic(clickedCol) {
-    if (win >= 0) {
+    if (win !== -1) {
+      console.log("gameLogic", win);
+      setIsAiPlaying(false);
+      setAreYouPlaying(false);
+      return;
+    }
+    if (!start) {
+      Alert.alert("Please click start the game first!");
       return;
     }
 
@@ -89,13 +116,59 @@ export default function Board(props) {
       }
       row--;
     }
-    setWin(checkWin(grid));
     setCurrent(1 - current);
+
+    // Check for win condition
+    const newWin = checkWin(grid);
+    if (newWin !== -1) {
+      // Set win state and prevent further updates
+      setWin(newWin);
+      return;
+    }
   }
+
+  const handleStart = () => {
+    setCountStart(true);
+    const timeStart = setTimeout(() => {
+      setStart(true);
+      setCountStart(false);
+    }, 3000);
+
+    return () => clearTimeout(timeStart);
+  };
 
   return (
     <View style={styles.container}>
-      <CountDown isPlaying={isPlaying} />
+      {countStart && (
+        <View style={styles.counter}>
+          <StartLunch />
+        </View>
+      )}
+      {isAiPlaying && (
+        <View style={styles.counter}>
+          <Text style={{ color: "white", fontSize: 20 }}>
+            Ai is thinking...
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.playersHeader}>
+        <CountDown
+          isPlaying={areYouPlaying}
+          playerName="You"
+          current={current}
+          handleTimeWin={handleTimeWin}
+          isPlayerTurn={current === 0}
+        />
+        <CountDown
+          isPlaying={isAiPlaying}
+          playerName="Ai"
+          current={current}
+          handleTimeWin={handleTimeWin}
+          isPlayerTurn={current === 1}
+        />
+      </View>
+
       <View style={styles.board}>
         {Array(6)
           .fill()
@@ -126,18 +199,23 @@ export default function Board(props) {
           },
         ]}>
         {win >= 0 &&
-          (win === 0 ? "Red won!" : win === 1 ? "Yellow won!" : "It's a tie!")}
+          (win === 0 ? "You won!" : win === 1 ? "Ai won!" : "It's a tie!")}
       </Text>
 
-      <Text
+      {/* create elevate button for starts and after starts begins it hides */}
+
+      <TouchableOpacity
+        onPress={() => handleStart()}
         style={{
-          color: "white",
-          fontSize: 20,
-          alignSelf: "center",
+          backgroundColor: start ? "grey" : "dodgerblue",
+          padding: 10,
+          borderRadius: 10,
+          marginTop: 10,
+          marginHorizontal: 20,
         }}
-        onPress={() => aiTurn()}>
-        Click Ai
-      </Text>
+        disabled={start}>
+        <Text style={{ color: "white", textAlign: "center" }}>Start</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -147,6 +225,7 @@ const styles = StyleSheet.create({
     backgroundColor: "dodgerblue",
     borderRadius: 10,
     borderWidth: 3,
+    alignSelf: "center",
   },
   row: {
     display: "flex",
@@ -155,5 +234,27 @@ const styles = StyleSheet.create({
   win: {
     fontSize: 35,
     alignSelf: "center",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#181818",
+    justifyContent: "center",
+  },
+  playersHeader: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    // center the players header
+  },
+  counter: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
   },
 });
