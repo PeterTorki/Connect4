@@ -1,21 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, TouchableOpacity, Dimensions } from "react-native";
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Dimensions,
+  Text,
+} from "react-native";
 
 const window = Dimensions.get("window");
 const W = window.width;
 
-export default function Cell({
+const Cell = ({
   col,
   row,
   player: currentPlayer,
   addSetPlayerToCell,
   onPress,
-}) {
+  isHighlighted,
+}) => {
   const [player, setPlayer] = useState(currentPlayer);
 
   useEffect(() => {
     addSetPlayerToCell(col, row, setPlayer);
   }, []);
+
+  const isHighlightedStyle = isHighlighted
+    ? {
+        borderColor: "#f0f0f0",
+        borderWidth: 2,
+      }
+    : {};
 
   return (
     <TouchableOpacity
@@ -26,13 +40,14 @@ export default function Cell({
           styles.opening,
           {
             backgroundColor:
-              player < 0 ? "#181818" : player === 0 ? "salmon" : "yellow",
+              player < 0 ? "#181818" : player === 0 ? "#18BC9C" : "#EE6677",
+            ...isHighlightedStyle,
           },
         ]}
       />
     </TouchableOpacity>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -47,3 +62,5 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
 });
+
+export default Cell;

@@ -29,11 +29,11 @@ const createGrid = () => {
     .map(() =>
       Array(7)
         .fill()
-        .map(() => ({ player: -1, setPlayer: null }))
+        .map(() => ({ player: -1, setPlayer: null, isHighlighted: false }))
     );
 };
 
-export default function Board(props) {
+const Board = () => {
   const [grid, setGrid] = useState(createGrid());
   const [current, setCurrent] = useState(0);
   const [win, setWin] = useState(-1);
@@ -54,12 +54,6 @@ export default function Board(props) {
     }
   }, [current, start]);
 
-  function updateCell(i, j, prop, value) {
-    const copied = copyGrid(grid);
-    copied[j][i][prop] = value;
-    setGrid(copied);
-  }
-
   useEffect(() => {
     if (win !== -1) {
       setIsAiPlaying(false);
@@ -67,7 +61,46 @@ export default function Board(props) {
     }
   }, [win]);
 
-  async function aiTurn() {
+  const renderGameBoard = () => {
+    return Array(6)
+      .fill()
+      .map((_, row) => (
+        <View style={styles.row} key={row}>
+          {Array(7)
+            .fill()
+            .map((_, col) => (
+              <View key={`${row}-${col}`}>
+                <Cell
+                  player={-1}
+                  onPress={gameLogic}
+                  addSetPlayerToCell={addSetPlayerToCell}
+                  col={col}
+                  row={row}
+                  isHighlighted={grid[row][col].isHighlighted}
+                />
+              </View>
+            ))}
+        </View>
+      ));
+  };
+
+  const updateCellOnFirst = (i, j, prop, value) => {
+    const copied = copyGrid(grid);
+    copied[j][i]["setPlayer"] = value;
+
+    setGrid(copied);
+  };
+
+  const updateCellOnPress = (i, j, prop, value) => {
+    const copied = copyGrid(grid);
+    copied[j][i]["player"] = value;
+
+    copied.map((row) => row.map((cell) => (cell.isHighlighted = false)));
+    copied[j][i].isHighlighted = true;
+    setGrid(copied);
+  };
+
+  const aiTurn = async () => {
     const board = grid.map((x) => x.map((obj) => obj.player + 1));
     try {
       const response = await axios.post(
@@ -82,20 +115,22 @@ export default function Board(props) {
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
-  function addSetPlayerToCell(i, j, setPlayer) {
-    updateCell(i, j, "setPlayer", setPlayer);
-  }
+  const addSetPlayerToCell = (i, j, setPlayer) => {
+    if (setPlayer) {
+      updateCellOnFirst(i, j, "setPlayer", setPlayer);
+    }
+  };
 
-  function handleTimeWin(player) {
+  const handleTimeWin = (player) => {
     setIsAiPlaying(false);
     setAreYouPlaying(false);
     console.log("handleTimeWin", player);
     setWin(player);
-  }
+  };
 
-  function gameLogic(clickedCol) {
+  const gameLogic = (clickedCol) => {
     if (win !== -1) {
       console.log("gameLogic", win);
       setIsAiPlaying(false);
@@ -108,15 +143,25 @@ export default function Board(props) {
     }
 
     let row = 5;
+    let flag = false;
     while (row >= 0) {
       if (grid[row][clickedCol].player < 0) {
-        updateCell(clickedCol, row, "player", current);
+        console.log(
+          "Check Extra Cells",
+          grid[row][clickedCol].player,
+          row,
+          clickedCol
+        );
+        updateCellOnPress(clickedCol, row, "player", current);
         grid[row][clickedCol].setPlayer(current);
+        flag = true;
         break;
       }
       row--;
     }
-    setCurrent(1 - current);
+    if (flag) {
+      setCurrent(1 - current);
+    }
 
     // Check for win condition
     const newWin = checkWin(grid);
@@ -125,7 +170,7 @@ export default function Board(props) {
       setWin(newWin);
       return;
     }
-  }
+  };
 
   const handleStart = () => {
     setCountStart(true);
@@ -169,58 +214,39 @@ export default function Board(props) {
         />
       </View>
 
-      <View style={styles.board}>
-        {Array(6)
-          .fill()
-          .map((_, row) => (
-            <View style={styles.row} key={row}>
-              {Array(7)
-                .fill()
-                .map((_, col) => (
-                  <View key={`${row}-${col}`}>
-                    <Cell
-                      player={-1}
-                      onPress={gameLogic}
-                      addSetPlayerToCell={addSetPlayerToCell}
-                      col={col}
-                      row={row}
-                    />
-                  </View>
-                ))}
-            </View>
-          ))}
-      </View>
+      <View style={styles.board}>{renderGameBoard()}</View>
       <Text
         style={[
           styles.win,
           {
             color:
-              win >= 0 && (win === 0 ? "red" : win === 1 ? "yellow" : "white"),
+              win >= 0 &&
+              (win === 0 ? "red" : win === 1 ? "#EE6677" : "#18BC9C"),
           },
         ]}>
         {win >= 0 &&
           (win === 0 ? "You won!" : win === 1 ? "Ai won!" : "It's a tie!")}
       </Text>
 
-      {/* create elevate button for starts and after starts begins it hides */}
-
       <TouchableOpacity
         onPress={() => handleStart()}
         style={{
+          ...styles.startButton,
           backgroundColor: start ? "grey" : "dodgerblue",
-          padding: 10,
-          borderRadius: 10,
-          marginTop: 10,
-          marginHorizontal: 20,
         }}
         disabled={start}>
         <Text style={{ color: "white", textAlign: "center" }}>Start</Text>
       </TouchableOpacity>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#101B27",
+    justifyContent: "space-around",
+  },
   board: {
     backgroundColor: "dodgerblue",
     borderRadius: 10,
@@ -235,11 +261,7 @@ const styles = StyleSheet.create({
     fontSize: 35,
     alignSelf: "center",
   },
-  container: {
-    flex: 1,
-    backgroundColor: "#181818",
-    justifyContent: "center",
-  },
+
   playersHeader: {
     display: "flex",
     flexDirection: "row",
@@ -257,4 +279,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 100,
   },
+  startButton: {
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    marginHorizontal: 20,
+  },
 });
+
+export default Board;

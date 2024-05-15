@@ -5,71 +5,70 @@ export default function checkWin(board) {
   const grid = board.map((x) => x.map((obj) => obj.player));
 
   // horizontal
-  for (let j = 0; j < rows; j++) {
-    for (let i = 0; i <= cols - 4; i++) {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c <= cols - 4; c++) {
       if (
-        grid[j][i] === grid[j][i + 1] &&
-        grid[j][i + 1] === grid[j][i + 2] &&
-        grid[j][i + 2] === grid[j][i + 3] &&
-        grid[j][i] >= 0
+        grid[r][c] === grid[r][c + 1] &&
+        grid[r][c + 1] === grid[r][c + 2] &&
+        grid[r][c + 2] === grid[r][c + 3] &&
+        grid[r][c] >= 0
       ) {
-        return grid[j][i];
+        return grid[r][c];
       }
     }
   }
-
   // vertical
-  for (let j = 0; j <= rows - 4; j++) {
-    for (let i = 0; i < cols; i++) {
+  for (let r = 0; r <= rows - 4; r++) {
+    for (let c = 0; c < cols; c++) {
       if (
-        grid[j][i] === grid[j + 1][i] &&
-        grid[j + 1][i] === grid[j + 2][i] &&
-        grid[j + 2][i] === grid[j + 3][i] &&
-        grid[j][i] >= 0
+        grid[r][c] === grid[r + 1][c] &&
+        grid[r + 1][c] === grid[r + 2][c] &&
+        grid[r + 2][c] === grid[r + 3][c] &&
+        grid[r][c] >= 0
       ) {
-        return grid[j][i];
+        return grid[r][c];
       }
     }
   }
-
   // diagonal
-  for (let j = 0; j <= rows - 4; j++) {
-    for (let i = 0; i <= cols - 4; i++) {
+  for (let r = 0; r <= rows - 4; r++) {
+    for (let c = 0; c <= cols - 4; c++) {
       if (
-        grid[j][i] === grid[j + 1][i + 1] &&
-        grid[j + 1][i + 1] === grid[j + 2][i + 2] &&
-        grid[j + 2][i + 2] === grid[j + 3][i + 3] &&
-        grid[j][i] >= 0
+        grid[r][c] === grid[r + 1][c + 1] &&
+        grid[r + 1][c + 1] === grid[r + 2][c + 2] &&
+        grid[r + 2][c + 2] === grid[r + 3][c + 3] &&
+        grid[r][c] >= 0
       ) {
-        return grid[j][i];
+        return grid[r][c];
       }
     }
   }
 
-  // Anti-diagonal
-  for (let j = 0; j <= rows - 4; j++) {
-    for (let i = 0; i <= cols - 4; i++) {
+  // anti diagonal
+  for (let r = 0; r <= rows - 4; r++) {
+    for (let c = 0; c <= cols - 4; c++) {
       if (
-        grid[j][i + 3] === grid[j + 1][i + 2] &&
-        grid[j + 1][i + 2] === grid[j + 2][i + 1] &&
-        grid[j + 2][i + 1] === grid[j + 3][i] &&
-        grid[j][i + 3] >= 0
+        grid[r][c + 3] === grid[r + 1][c + 2] &&
+        grid[r + 1][c + 2] === grid[r + 2][c + 1] &&
+        grid[r + 2][c + 1] === grid[r + 3][c] &&
+        grid[r][c + 3] >= 0
       ) {
-        return grid[j][i + 3];
+        return grid[r][c + 3];
       }
     }
   }
-  
-  // Check for ties
-  let tie = true;
-  for (let j = 0; j < rows; j++) {
-    for (let i = 0; i < cols; i++) {
-      if (grid[j][i] < 0) {
-        tie = false;
+
+  // Check for tie
+  let tce = true;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c] < 0) {
+        tce = false;
       }
     }
   }
-  if (tie) return 2;
+
+  if (tce) return 2;
 
   return -1;
 }

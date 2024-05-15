@@ -13,6 +13,7 @@ const CountDown = ({
   return (
     <View style={styles.container}>
       <CountdownCircleTimer
+        size={100}
         isPlaying={isPlaying}
         duration={4 * 60}
         colors={isPlaying ? "#800000" : "#004777"}
@@ -26,23 +27,14 @@ const CountDown = ({
         }}
         updateInterval={1}>
         {({ remainingTime, color }) => (
-          <Text style={{ color, fontSize: 40 }}>
+          <Text style={{ color, fontSize: 25 }}>
             {Math.floor(remainingTime / 60) +
               `:${remainingTime % 60 < 10 ? "0" : ""}` +
               (remainingTime % 60)}
           </Text>
         )}
       </CountdownCircleTimer>
-      <Text
-        style={{
-          color: "white",
-          fontSize: 20,
-          textAlign: "center",
-          marginTop: 10,
-          marginBottom: 10,
-        }}>
-        {playerName}
-      </Text>
+      <Text style={styles.playerTitle}>{playerName}</Text>
     </View>
   );
 };
@@ -51,8 +43,13 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     borderRadius: 10,
-    alignItems: "left",
+    alignItems: "center",
     padding: 10,
+  },
+  playerTitle: {
+    fontSize: 20,
+    textAlign: "center",
+    color: "#f0f0f0",
   },
 });
 
